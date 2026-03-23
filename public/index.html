@@ -571,20 +571,21 @@ function offlineAnalysis(co, jt, jd, sal, loc) {
 }
 
 // ─── Call our own /api/analyze (keys are server-side) ─────────────────────────
-async function callAPI(prompt) {
+async function callAPI(jobData) {
   const r = await fetch('/api/analyze', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ prompt })
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jobData })  // ← Send all job data as one object
   });
   if (!r.ok) throw new Error(`API ${r.status}`);
-  return r.json();   // { result: string|null, source: 'gemini'|'groq'|'offline' }
+  return r.json();
 }
 
 function parseJSON(text) {
   return JSON.parse(text.replace(/```json\n?|```\n?/g,'').trim());
 }
 
+// ─── Main ─────────────────────────────────────────────────────────────────────
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function run() {
   const co  = document.getElementById('co').value.trim();
@@ -598,7 +599,8 @@ async function run() {
   errEl.classList.remove('show');
   if (!co || !jt || !jd) {
     errEl.textContent = 'Please fill in Company Name, Job Title, and Job Description.';
-    errEl.classList.add('show'); return;
+    errEl.classList.add('show'); 
+    return;
   }
 
   document.getElementById('analyzeBtn').disabled = true;
@@ -606,43 +608,70 @@ async function run() {
   document.getElementById('results').classList.remove('show');
   document.querySelector('.card').style.opacity = '.5';
   startDots();
-  ['reddit','ai','score'].forEach(s => {
-    const el = document.getElementById('s-'+s);
-    el.classList.remove('active','done');
+  
+  ['reddit', 'ai', 'score'].forEach(s => {
+    const el = document.getElementById('s-' + s);
+    el.classList.remove('active', 'done');
     el.querySelector('.step-ic').textContent = '⏳';
   });
 
-  // Step 1: Reddit
-  setStep('reddit','active');
+  // Step 1: Reddit (just for display, backend will fetch too)
+  setStep('reddit', 'active');
   let redditPosts = [];
-  try { redditPosts = await fetchReddit(co); } catch {}
-  const redditSummary = redditPosts.slice(0,5)
-    .map(p=>`Title: ${p.title}\n${p.snippet||''}`)
-    .join('\n---\n');
-  setStep('reddit','done');
+  try { 
+    redditPosts = await fetchReddit(co); 
+  } catch(e) { 
+    console.log('Reddit fetch failed:', e);
+  }
+  setStep('reddit', 'done');
 
-  // Step 2: AI
-  setStep('ai','active');
-  let data;
+  // Step 2: AI (backend handles everything)
+  setStep('ai', 'active');
+  let data = null;
+  let source = 'offline';
+  let backendReddit = [];
+  
   try {
-    const prompt = buildPrompt(co, jt, jd, sal, loc, extra, redditSummary);
-    const resp = await callAPI(prompt);
+    // Build jobData object for backend
+    const jobData = {
+      companyName: co,
+      jobTitle: jt,
+      jobDescription: jd,
+      salary: sal,
+      location: loc,
+      extraReviews: extra  // include manual Glassdoor pastes
+    };
+    
+    const resp = await callAPI(jobData);
+    
     if (resp.result) {
-      data = parseJSON(resp.result);
-      data._source = resp.source;
+      data = resp.result;
+      source = resp.source;
+      backendReddit = resp.reddit || [];
+      
+      // Use backend Reddit if available (better quality)
+      if (backendReddit.length > 0) {
+        redditPosts = backendReddit;
+      }
     } else {
+      // Fallback to offline analysis
       data = offlineAnalysis(co, jt, jd, sal, loc);
+      source = 'offline';
     }
   } catch (e) {
     console.warn('API call failed, using offline:', e);
     data = offlineAnalysis(co, jt, jd, sal, loc);
+    source = 'offline';
   }
-  setStep('ai','done');
+  
+  // Attach source to data
+  data._source = source;
+  setStep('ai', 'done');
 
-  // Step 3
-  setStep('score','active');
-  await new Promise(r=>setTimeout(r,350));
-  setStep('score','done');
+  // Step 3: Finalize
+  setStep('score', 'active');
+  await new Promise(r => setTimeout(r, 350));
+  setStep('score', 'done');
 
   stopDots();
   render(data, redditPosts, extra, co);
@@ -651,7 +680,7 @@ async function run() {
   document.getElementById('results').classList.add('show');
   document.getElementById('analyzeBtn').disabled = false;
   document.querySelector('.card').style.opacity = '1';
-  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ─── Render ───────────────────────────────────────────────────────────────────
