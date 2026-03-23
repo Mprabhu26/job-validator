@@ -13,20 +13,55 @@
             <p>Paste any LinkedIn job URL to analyze if it's legitimate or a potential scam</p>
         </header>
 
+        <!-- INSTRUCTIONS SECTION - NEW -->
+        <div class="instructions">
+            <h3>📖 How to Use This Tool</h3>
+            <div class="steps">
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <div class="step-content">
+                        <strong>Find a job on LinkedIn</strong>
+                        <p>Go to LinkedIn and search for jobs. Click on any job posting you want to check.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <div class="step-content">
+                        <strong>Copy the job URL</strong>
+                        <p>From your browser's address bar, copy the full URL. It should look like:<br>
+                        <code>https://www.linkedin.com/jobs/view/1234567890/</code></p>
+                    </div>
+                </div>
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <div class="step-content">
+                        <strong>Paste and analyze</strong>
+                        <p>Paste the URL in the box below and click "Analyze Job". Wait a few seconds for results.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="tip">
+                💡 <strong>Tip:</strong> Make sure the URL contains <code>/jobs/view/</code> - this is a public job page. 
+                URLs with <code>/jobs/collections/</code> are your personal recommendations and won't work.
+            </div>
+        </div>
+
         <div class="input-section">
-            <input type="url" id="jobUrl" placeholder="https://www.linkedin.com/jobs/view/..." spellcheck="false">
+            <input type="url" id="jobUrl" placeholder="https://www.linkedin.com/jobs/view/1234567890/" spellcheck="false">
             <button id="analyzeBtn">Analyze Job →</button>
         </div>
 
         <div id="loading" class="loading hidden">
             <div class="spinner"></div>
-            <p>Analyzing job posting...</p>
+            <p>Fetching job details and analyzing...</p>
+            <p class="small-text">This may take 10-15 seconds</p>
         </div>
 
         <div id="results" class="results hidden"></div>
 
         <footer>
-            <p>⚠️ This tool uses public data and pattern recognition. Always do your own research before applying.</p>
+            <p>⚠️ This tool analyzes job descriptions for scam patterns using public data. Always do your own research before applying or sharing personal information.</p>
+            <p class="small-text">🔒 All analysis happens in your browser. No data is stored on any server.</p>
         </footer>
     </div>
 
