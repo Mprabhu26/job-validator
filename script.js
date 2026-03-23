@@ -1,6 +1,6 @@
 // ============================================
 // JOB LEGITIMACY CHECKER
-// Pure Manual Input - No URL, No Proxies
+// Simple Version - Scam Detection Only
 // ============================================
 
 // DOM Elements
@@ -13,7 +13,7 @@ const resultsDiv = document.getElementById('results');
 // Scam patterns to detect
 const SCAM_PATTERNS = {
     aiInterview: {
-        keywords: ['AI interview', 'record yourself', 'train our AI', 'test our model', 'AI training', 'record your response', 'LLM', 'Large Language Model', 'data annotation', 'annotator', 'train our model', 'training data', 'language model training', 'train ai', 'ai model'],
+        keywords: ['AI interview', 'record yourself', 'train our AI', 'test our model', 'AI training', 'record your response', 'LLM', 'Large Language Model', 'data annotation', 'annotator', 'train our model', 'training data', 'language model training'],
         weight: 25,
         message: '⚠️ AI Training Scam - May be using you to train their AI model for free or low pay'
     },
@@ -76,62 +76,7 @@ function analyzeScamPatterns(jobDescription, companyName) {
     };
 }
 
-// Fetch Reddit posts about the company
-async function fetchRedditData(companyName) {
-    if (!companyName || companyName.length < 3) return null;
-    
-    try {
-        const searchTerm = encodeURIComponent(companyName.split(' ')[0]);
-        const response = await fetch(
-            `https://www.reddit.com/search.json?q=${searchTerm}&limit=8`,
-            {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (compatible; JobValidator/1.0)'
-                }
-            }
-        );
-        
-        if (!response.ok) throw new Error('Reddit API error');
-        
-        const data = await response.json();
-        
-        if (data.data && data.data.children && data.data.children.length > 0) {
-            const scamMentions = [];
-            let relevantPosts = 0;
-            
-            data.data.children.forEach(child => {
-                const post = child.data;
-                const content = (post.title + ' ' + (post.selftext || '')).toLowerCase();
-                
-                if (content.includes(companyName.toLowerCase()) || content.includes(searchTerm.toLowerCase())) {
-                    relevantPosts++;
-                    if (content.includes('scam') || content.includes('fake') || content.includes('ghost job') || 
-                        content.includes('never heard back') || content.includes('avoid') || content.includes('warning') ||
-                        content.includes('red flag') || content.includes('fraud')) {
-                        scamMentions.push({
-                            title: post.title.substring(0, 120),
-                            url: `https://reddit.com${post.permalink}`,
-                            score: post.score
-                        });
-                    }
-                }
-            });
-            
-            return {
-                totalPosts: relevantPosts,
-                scamMentions: scamMentions,
-                hasData: relevantPosts > 0
-            };
-        }
-        return { hasData: false };
-        
-    } catch (error) {
-        console.error('Reddit fetch error:', error);
-        return null;
-    }
-}
-
-// Extract company name from job description
+// Extract company name from job description if not provided
 function extractCompanyFromDescription(jobDescription) {
     if (!jobDescription) return null;
     
@@ -150,17 +95,6 @@ function extractCompanyFromDescription(jobDescription) {
     }
     
     return null;
-}
-
-// Calculate final trust score
-function calculateTrustScore(scamAnalysis, redditData) {
-    let score = scamAnalysis.score;
-    
-    if (redditData && redditData.hasData && redditData.scamMentions.length > 0) {
-        score -= Math.min(25, redditData.scamMentions.length * 8);
-    }
-    
-    return Math.max(0, Math.min(100, score));
 }
 
 // Get recommendation
@@ -191,7 +125,7 @@ function escapeHtml(text) {
 }
 
 // Display results
-function displayResults(trustScore, scamAnalysis, redditData, companyName, jobDescription) {
+function displayResults(trustScore, scamAnalysis, companyName, jobDescription) {
     const recommendation = getRecommendation(trustScore);
     
     let scoreColor = '#28a745';
@@ -210,8 +144,8 @@ function displayResults(trustScore, scamAnalysis, redditData, companyName, jobDe
     `;
     
     if (companyName) {
-        html += `<div class="section"><h3>🏢 Company: ${escapeHtml(companyName)}</h3>`;
         const glassdoorSearchUrl = `https://www.glassdoor.com/Reviews/${encodeURIComponent(companyName.replace(/ /g, '-'))}-Reviews-E.htm`;
+        html += `<div class="section"><h3>🏢 Company: ${escapeHtml(companyName)}</h3>`;
         html += `<a href="${glassdoorSearchUrl}" target="_blank" rel="noopener noreferrer" class="glassdoor-link">📊 View on Glassdoor →</a>`;
         html += `</div>`;
     }
@@ -232,24 +166,6 @@ function displayResults(trustScore, scamAnalysis, redditData, companyName, jobDe
     }
     html += `</div>`;
     
-    // Reddit Analysis
-    if (redditData && redditData.hasData) {
-        html += `<div class="section"><h3>🗣️ Reddit Community Analysis</h3>`;
-        html += `<p>Found ${redditData.totalPosts} discussions mentioning this company</p>`;
-        
-        if (redditData.scamMentions.length > 0) {
-            html += `<p><strong>⚠️ ${redditData.scamMentions.length} scam-related mentions found:</strong></p>`;
-            redditData.scamMentions.forEach(post => {
-                html += `<div class="reddit-post">📌 <a href="${post.url}" target="_blank" rel="noopener noreferrer">${escapeHtml(post.title)}</a></div>`;
-            });
-        } else {
-            html += `<p>✅ No scam mentions found in recent Reddit discussions</p>`;
-        }
-        html += `</div>`;
-    } else if (companyName) {
-        html += `<div class="section"><h3>🗣️ Reddit Analysis</h3><p>ℹ️ Could not fetch Reddit data for "${escapeHtml(companyName)}". Try searching manually on Reddit.</p></div>`;
-    }
-    
     // Show preview of analyzed text
     if (jobDescription && jobDescription.length > 0) {
         html += `<div class="section"><h3>📄 Analyzed Job Description Preview</h3>`;
@@ -261,19 +177,8 @@ function displayResults(trustScore, scamAnalysis, redditData, companyName, jobDe
     resultsDiv.classList.remove('hidden');
 }
 
-// Display error
-function displayError(message) {
-    resultsDiv.innerHTML = `
-        <div class="section" style="background: #f8d7da; color: #721c24;">
-            <h3>❌ Error</h3>
-            <p>${escapeHtml(message)}</p>
-        </div>
-    `;
-    resultsDiv.classList.remove('hidden');
-}
-
 // Main analysis function
-async function analyzeJob() {
+function analyzeJob() {
     const jobDescription = jobDescTextarea.value.trim();
     let companyName = companyNameInput.value.trim();
     
@@ -301,27 +206,14 @@ async function analyzeJob() {
     loadingDiv.classList.remove('hidden');
     resultsDiv.classList.add('hidden');
     
-    try {
+    // Small delay to show loading animation
+    setTimeout(() => {
         const scamAnalysis = analyzeScamPatterns(jobDescription, companyName);
+        const trustScore = scamAnalysis.score;
         
-        let redditData = null;
-        if (companyName && companyName.length >= 3) {
-            try {
-                redditData = await fetchRedditData(companyName);
-            } catch (e) {
-                console.log('Reddit fetch skipped:', e);
-            }
-        }
-        
-        const trustScore = calculateTrustScore(scamAnalysis, redditData);
-        displayResults(trustScore, scamAnalysis, redditData, companyName, jobDescription);
-        
-    } catch (error) {
-        console.error('Analysis error:', error);
-        displayError('An unexpected error occurred. Please try again.');
-    } finally {
+        displayResults(trustScore, scamAnalysis, companyName, jobDescription);
         loadingDiv.classList.add('hidden');
-    }
+    }, 100);
 }
 
 // Event listeners
