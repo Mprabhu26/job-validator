@@ -1,10 +1,12 @@
 // ============================================
 // JOB LEGITIMACY CHECKER
-// Manual Input Version - 100% Reliable
+// Complete Version with Manual Input
 // ============================================
 
 // DOM Elements
 const jobUrlInput = document.getElementById('jobUrl');
+const jobDescTextarea = document.getElementById('jobDescription');
+const companyNameInput = document.getElementById('companyName');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const loadingDiv = document.getElementById('loading');
 const resultsDiv = document.getElementById('results');
@@ -12,27 +14,27 @@ const resultsDiv = document.getElementById('results');
 // Scam patterns to detect
 const SCAM_PATTERNS = {
     aiInterview: {
-        keywords: ['AI interview', 'record yourself', 'train our AI', 'test our model', 'AI training', 'record your response', 'LLM', 'Large Language Model', 'data annotation', 'annotator', 'train our model', 'training data'],
+        keywords: ['AI interview', 'record yourself', 'train our AI', 'test our model', 'AI training', 'record your response', 'LLM', 'Large Language Model', 'data annotation', 'annotator', 'train our model', 'training data', 'language model training'],
         weight: 25,
         message: '⚠️ AI Training Scam - May be using you to train their AI model for free or low pay'
     },
     paymentRequest: {
-        keywords: ['pay for training', 'deposit required', 'equipment fee', 'background check fee', 'processing fee', 'registration fee', 'application fee', 'pay to apply'],
+        keywords: ['pay for training', 'deposit required', 'equipment fee', 'background check fee', 'processing fee', 'registration fee', 'application fee', 'pay to apply', 'investment required'],
         weight: 30,
         message: '💰 Requests Payment - Legitimate employers never ask for money'
     },
     urgency: {
-        keywords: ['immediate start', 'urgent hiring', 'limited positions', 'act now', 'apply today only', 'within 2 days', 'within 48 hours', 'apply immediately'],
+        keywords: ['immediate start', 'urgent hiring', 'limited positions', 'act now', 'apply today only', 'within 2 days', 'within 48 hours', 'apply immediately', 'hiring immediately'],
         weight: 10,
         message: '⏰ High Pressure Tactics - Scammers create false urgency'
     },
     suspiciousContact: {
-        keywords: ['@gmail.com', '@hotmail.com', '@yahoo.com', '@outlook.com', 'whatsapp', 'telegram', 'signal app', 'telegram group'],
+        keywords: ['@gmail.com', '@hotmail.com', '@yahoo.com', '@outlook.com', 'whatsapp', 'telegram', 'signal app', 'telegram group', 'skype interview'],
         weight: 20,
         message: '📧 Suspicious Contact Method - Legitimate companies use professional email domains'
     },
     vagueDescription: {
-        keywords: ['work from home', 'no experience needed', 'earn quick money', 'unlimited income', 'be your own boss', 'flexible hours', 'freelance', 'project-based', 'make money fast'],
+        keywords: ['work from home', 'no experience needed', 'earn quick money', 'unlimited income', 'be your own boss', 'flexible hours', 'freelance', 'project-based', 'make money fast', 'easy money'],
         weight: 15,
         message: '📝 Vague Job Description - Lacks specific responsibilities and requirements'
     }
@@ -105,7 +107,8 @@ async function fetchRedditData(companyName) {
                 if (content.includes(companyName.toLowerCase()) || content.includes(searchTerm.toLowerCase())) {
                     relevantPosts++;
                     if (content.includes('scam') || content.includes('fake') || content.includes('ghost job') || 
-                        content.includes('never heard back') || content.includes('avoid') || content.includes('warning')) {
+                        content.includes('never heard back') || content.includes('avoid') || content.includes('warning') ||
+                        content.includes('red flag') || content.includes('fraud')) {
                         scamMentions.push({
                             title: post.title.substring(0, 120),
                             url: `https://reddit.com${post.permalink}`,
@@ -129,15 +132,15 @@ async function fetchRedditData(companyName) {
     }
 }
 
-// Extract company name from job description
-function extractCompanyName(jobDescription) {
+// Extract company name from job description if not provided
+function extractCompanyFromDescription(jobDescription) {
     if (!jobDescription) return null;
     
     const patterns = [
         /(?:at|for)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3})/,
         /company[:\s]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3})/i,
         /([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\s+(?:is hiring|is seeking|is looking)/i,
-        /([A-Z][a-z]+)\s+(?:Inc|Corp|LLC|Ltd|GmbH)/i
+        /([A-Z][a-z]+)\s+(?:Inc|Corp|LLC|Ltd|GmbH|AG|SE)/i
     ];
     
     for (const pattern of patterns) {
@@ -181,6 +184,13 @@ function getRecommendation(score) {
     }
 }
 
+// Escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Display results
 function displayResults(trustScore, scamAnalysis, redditData, companyName, jobDescription) {
     const recommendation = getRecommendation(trustScore);
@@ -201,7 +211,12 @@ function displayResults(trustScore, scamAnalysis, redditData, companyName, jobDe
     `;
     
     if (companyName) {
-        html += `<div class="section"><h3>🏢 Company: ${companyName}</h3></div>`;
+        html += `<div class="section"><h3>🏢 Company: ${escapeHtml(companyName)}</h3>`;
+        
+        // Add Glassdoor link
+        const glassdoorSearchUrl = `https://www.glassdoor.com/Reviews/${encodeURIComponent(companyName.replace(/ /g, '-'))}-Reviews-E.htm`;
+        html += `<a href="${glassdoorSearchUrl}" target="_blank" rel="noopener noreferrer" class="glassdoor-link">📊 View on Glassdoor →</a>`;
+        html += `</div>`;
     }
     
     // Scam Pattern Analysis
@@ -228,20 +243,20 @@ function displayResults(trustScore, scamAnalysis, redditData, companyName, jobDe
         if (redditData.scamMentions.length > 0) {
             html += `<p><strong>⚠️ ${redditData.scamMentions.length} scam-related mentions found:</strong></p>`;
             redditData.scamMentions.forEach(post => {
-                html += `<div class="reddit-post">📌 <a href="${post.url}" target="_blank" rel="noopener noreferrer">${post.title}</a></div>`;
+                html += `<div class="reddit-post">📌 <a href="${post.url}" target="_blank" rel="noopener noreferrer">${escapeHtml(post.title)}</a></div>`;
             });
         } else {
             html += `<p>✅ No scam mentions found in recent Reddit discussions</p>`;
         }
         html += `</div>`;
-    } else {
-        html += `<div class="section"><h3>🗣️ Reddit Analysis</h3><p>ℹ️ Could not fetch Reddit data. This doesn't indicate a problem with the job.</p></div>`;
+    } else if (companyName) {
+        html += `<div class="section"><h3>🗣️ Reddit Analysis</h3><p>ℹ️ Could not fetch Reddit data for "${escapeHtml(companyName)}". Try searching manually on Reddit.</p></div>`;
     }
     
-    // Show the analyzed text
+    // Show preview of analyzed text
     if (jobDescription && jobDescription.length > 0) {
-        html += `<div class="section"><h3>📄 Analyzed Job Description</h3>`;
-        html += `<p style="font-size: 0.85rem; color: #666; max-height: 150px; overflow-y: auto; background: #f8f9fa; padding: 12px; border-radius: 8px; white-space: pre-wrap;">${escapeHtml(jobDescription.substring(0, 800))}${jobDescription.length > 800 ? '...' : ''}</p>`;
+        html += `<div class="section"><h3>📄 Analyzed Job Description Preview</h3>`;
+        html += `<p style="font-size: 0.85rem; color: #666; max-height: 150px; overflow-y: auto; background: #f8f9fa; padding: 12px; border-radius: 8px; white-space: pre-wrap;">${escapeHtml(jobDescription.substring(0, 600))}${jobDescription.length > 600 ? '...' : ''}</p>`;
         html += `</div>`;
     }
     
@@ -249,54 +264,53 @@ function displayResults(trustScore, scamAnalysis, redditData, companyName, jobDe
     resultsDiv.classList.remove('hidden');
 }
 
-// Helper function to escape HTML
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+// Display error
+function displayError(message) {
+    resultsDiv.innerHTML = `
+        <div class="section" style="background: #f8d7da; color: #721c24;">
+            <h3>❌ Error</h3>
+            <p>${escapeHtml(message)}</p>
+        </div>
+    `;
+    resultsDiv.classList.remove('hidden');
 }
 
 // Main analysis function
 async function analyzeJob() {
-    const url = jobUrlInput.value.trim();
+    const jobDescription = jobDescTextarea.value.trim();
+    let companyName = companyNameInput.value.trim();
     
-    if (!url) {
-        alert('Please paste a LinkedIn job URL');
+    // Validate
+    if (!jobDescription) {
+        alert('Please paste the job description');
+        jobDescTextarea.focus();
         return;
     }
     
-    if (!url.includes('linkedin.com/jobs/view/')) {
-        alert('Please enter a valid LinkedIn job URL.\n\nIt should look like: https://www.linkedin.com/jobs/view/1234567890/');
+    if (jobDescription.length < 50) {
+        alert('Please paste a complete job description (at least 50 characters)');
+        jobDescTextarea.focus();
         return;
+    }
+    
+    // If company name not provided, try to extract from description
+    if (!companyName) {
+        companyName = extractCompanyFromDescription(jobDescription);
+        if (companyName) {
+            companyNameInput.value = companyName;
+        }
     }
     
     loadingDiv.classList.remove('hidden');
     resultsDiv.classList.add('hidden');
     
-    // Show manual input option since automatic fetch is blocked
-    const userDescription = prompt(
-        '🔍 LinkedIn is blocking automatic fetching.\n\nPlease copy and paste the job description from LinkedIn into the box below.\n\n' +
-        'To copy:\n' +
-        '1. Go to the LinkedIn job page\n' +
-        '2. Scroll to the job description section\n' +
-        '3. Select all text (Ctrl+A / Cmd+A)\n' +
-        '4. Copy (Ctrl+C / Cmd+C)\n' +
-        '5. Paste below'
-    );
-    
-    if (!userDescription || userDescription.trim().length < 50) {
-        loadingDiv.classList.add('hidden');
-        alert('Please paste a valid job description (at least 50 characters) to analyze.');
-        return;
-    }
-    
     try {
-        const jobDescription = userDescription;
-        const companyName = extractCompanyName(jobDescription);
+        // Analyze scam patterns
         const scamAnalysis = analyzeScamPatterns(jobDescription, companyName);
         
+        // Fetch Reddit data if company name exists
         let redditData = null;
-        if (companyName) {
+        if (companyName && companyName.length >= 3) {
             try {
                 redditData = await fetchRedditData(companyName);
             } catch (e) {
@@ -304,7 +318,10 @@ async function analyzeJob() {
             }
         }
         
+        // Calculate trust score
         const trustScore = calculateTrustScore(scamAnalysis, redditData);
+        
+        // Display results
         displayResults(trustScore, scamAnalysis, redditData, companyName, jobDescription);
         
     } catch (error) {
@@ -315,18 +332,5 @@ async function analyzeJob() {
     }
 }
 
-function displayError(message) {
-    resultsDiv.innerHTML = `
-        <div class="section" style="background: #f8d7da; color: #721c24;">
-            <h3>❌ Error</h3>
-            <p>${message}</p>
-        </div>
-    `;
-    resultsDiv.classList.remove('hidden');
-}
-
 // Event listeners
 analyzeBtn.addEventListener('click', analyzeJob);
-jobUrlInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') analyzeJob();
-});

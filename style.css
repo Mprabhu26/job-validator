@@ -36,7 +36,7 @@ header p {
     opacity: 0.9;
 }
 
-/* INSTRUCTIONS SECTION - NEW */
+/* Instructions */
 .instructions {
     background: #f0f4ff;
     padding: 25px 30px;
@@ -58,7 +58,7 @@ header p {
 
 .step {
     flex: 1;
-    min-width: 200px;
+    min-width: 180px;
     display: flex;
     gap: 12px;
     align-items: flex-start;
@@ -77,10 +77,6 @@ header p {
     flex-shrink: 0;
 }
 
-.step-content {
-    flex: 1;
-}
-
 .step-content strong {
     display: block;
     margin-bottom: 5px;
@@ -89,16 +85,8 @@ header p {
 
 .step-content p {
     color: #4a5568;
-    font-size: 0.85rem;
-    line-height: 1.4;
-}
-
-.step-content code {
-    background: #e2e8f0;
-    padding: 2px 6px;
-    border-radius: 4px;
     font-size: 0.8rem;
-    word-break: break-all;
+    line-height: 1.4;
 }
 
 .tip {
@@ -110,36 +98,60 @@ header p {
     color: #2c7a7b;
 }
 
-.tip code {
-    background: #c6f6e5;
-    padding: 2px 6px;
-    border-radius: 4px;
-}
-
+/* Input Section */
 .input-section {
     padding: 30px 40px;
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
 }
 
-input {
-    flex: 1;
-    padding: 15px 20px;
-    font-size: 1rem;
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.input-group label span {
+    font-weight: normal;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.input-group input, .input-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 0.95rem;
     border: 2px solid #e0e0e0;
     border-radius: 10px;
     transition: all 0.3s;
+    font-family: inherit;
 }
 
-input:focus {
+.input-group input:focus, .input-group textarea:focus {
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+.input-group textarea {
+    resize: vertical;
+    font-family: monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.hint {
+    font-size: 0.7rem;
+    color: #888;
+    margin-top: 5px;
+}
+
 button {
-    padding: 15px 30px;
+    width: 100%;
+    padding: 15px;
     font-size: 1rem;
     font-weight: 600;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -148,6 +160,7 @@ button {
     border-radius: 10px;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 10px;
 }
 
 button:hover {
@@ -155,6 +168,7 @@ button:hover {
     box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
+/* Loading */
 .loading {
     text-align: center;
     padding: 40px;
@@ -181,6 +195,7 @@ button:hover {
     margin-top: 10px;
 }
 
+/* Results */
 .results {
     padding: 40px;
     border-top: 1px solid #e0e0e0;
@@ -274,6 +289,21 @@ button:hover {
     text-decoration: underline;
 }
 
+.glassdoor-link {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 8px 15px;
+    background: #0b5b4f;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.glassdoor-link:hover {
+    background: #0a4a40;
+}
+
 footer {
     background: #f8f9fa;
     padding: 20px 40px;
@@ -295,16 +325,11 @@ footer .small-text {
 
 @media (max-width: 768px) {
     .input-section {
-        flex-direction: column;
         padding: 20px;
     }
     
     header h1 {
         font-size: 1.5rem;
-    }
-    
-    .results {
-        padding: 20px;
     }
     
     .instructions {
@@ -314,9 +339,5 @@ footer .small-text {
     .steps {
         flex-direction: column;
         gap: 15px;
-    }
-    
-    .step {
-        min-width: auto;
     }
 }
