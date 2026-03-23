@@ -1,6 +1,6 @@
 // ============================================
-// JOB LEGITIMACY CHECKER - IMPROVED VERSION
-// With multiple fallback methods
+// JOB LEGITIMACY CHECKER
+// Manual Input Version - 100% Reliable
 // ============================================
 
 // DOM Elements
@@ -38,118 +38,6 @@ const SCAM_PATTERNS = {
     }
 };
 
-// Multiple proxy services (free, no API key)
-const PROXIES = [
-    (url) => `https://api.allorigins.ws/raw?url=${encodeURIComponent(url)}`,
-    (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-    (url) => `https://cors-anywhere.herokuapp.com/${url}`,
-    (url) => `https://thingproxy.freeboard.io/fetch/${url}`
-];
-
-// Fetch job description from LinkedIn URL with multiple proxy fallbacks
-async function fetchJobDescription(url) {
-    let lastError = null;
-    
-    for (const proxy of PROXIES) {
-        try {
-            const proxyUrl = proxy(url);
-            console.log(`Trying proxy: ${proxyUrl}`);
-            
-            const response = await fetch(proxyUrl, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            
-            const html = await response.text();
-            
-            // Check if we got actual content (not LinkedIn login page)
-            if (html.includes('login') && html.includes('linkedin') && html.length < 5000) {
-                console.log('Got login page, trying next proxy');
-                continue;
-            }
-            
-            // Extract job description from HTML
-            const description = extractDescriptionFromHTML(html);
-            
-            if (description && description.length > 100) {
-                console.log(`Successfully extracted ${description.length} characters`);
-                return description;
-            }
-            
-        } catch (error) {
-            console.log(`Proxy failed: ${error.message}`);
-            lastError = error;
-            continue;
-        }
-    }
-    
-    console.error('All proxies failed');
-    return null;
-}
-
-// Extract description from LinkedIn HTML
-function extractDescriptionFromHTML(html) {
-    let description = '';
-    
-    // Method 1: LinkedIn's job description div
-    const descMatch = html.match(/<div[^>]*class="[^"]*description__text[^"]*"[^>]*>(.*?)<\/div>/is);
-    if (descMatch) {
-        description += cleanHTML(descMatch[1]) + ' ';
-    }
-    
-    // Method 2: Show more less markup
-    const markupMatch = html.match(/<div[^>]*class="[^"]*show-more-less-html__markup[^"]*"[^>]*>(.*?)<\/div>/is);
-    if (markupMatch) {
-        description += cleanHTML(markupMatch[1]) + ' ';
-    }
-    
-    // Method 3: Jobs description
-    const jobsDescMatch = html.match(/<div[^>]*class="[^"]*jobs-description[^"]*"[^>]*>(.*?)<\/div>/is);
-    if (jobsDescMatch) {
-        description += cleanHTML(jobsDescMatch[1]) + ' ';
-    }
-    
-    // Method 4: Any div containing job description text
-    if (description.length < 100) {
-        const textMatch = html.match(/>(.*?(?:responsibilities|qualifications|requirements|about the role|description).*?)</is);
-        if (textMatch) {
-            description += cleanHTML(textMatch[1]) + ' ';
-        }
-    }
-    
-    // Method 5: Extract meta description
-    const metaMatch = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i);
-    if (metaMatch) {
-        description += cleanHTML(metaMatch[1]) + ' ';
-    }
-    
-    // Method 6: Extract title
-    const titleMatch = html.match(/<title>(.*?)<\/title>/i);
-    if (titleMatch) {
-        description += titleMatch[1] + ' ';
-    }
-    
-    return description.trim();
-}
-
-// Clean HTML tags and decode entities
-function cleanHTML(text) {
-    return text
-        .replace(/<[^>]*>/g, ' ')           // Remove HTML tags
-        .replace(/&nbsp;/g, ' ')            // Replace &nbsp;
-        .replace(/&amp;/g, '&')             // Replace &amp;
-        .replace(/&lt;/g, '<')              // Replace &lt;
-        .replace(/&gt;/g, '>')              // Replace &gt;
-        .replace(/&quot;/g, '"')            // Replace &quot;
-        .replace(/\s+/g, ' ')               // Collapse multiple spaces
-        .trim();
-}
-
 // Analyze job description for scam patterns
 function analyzeScamPatterns(jobDescription, companyName) {
     const detectedFlags = [];
@@ -163,7 +51,6 @@ function analyzeScamPatterns(jobDescription, companyName) {
         
         for (const keyword of pattern.keywords) {
             if (textToAnalyze.includes(keyword.toLowerCase())) {
-                // Check if already flagged
                 if (!detectedFlags.find(f => f.type === key)) {
                     detectedFlags.push({
                         type: key,
@@ -295,7 +182,7 @@ function getRecommendation(score) {
 }
 
 // Display results
-function displayResults(trustScore, scamAnalysis, redditData, companyName, jobDescriptionPreview) {
+function displayResults(trustScore, scamAnalysis, redditData, companyName, jobDescription) {
     const recommendation = getRecommendation(trustScore);
     
     let scoreColor = '#28a745';
@@ -351,10 +238,10 @@ function displayResults(trustScore, scamAnalysis, redditData, companyName, jobDe
         html += `<div class="section"><h3>🗣️ Reddit Analysis</h3><p>ℹ️ Could not fetch Reddit data. This doesn't indicate a problem with the job.</p></div>`;
     }
     
-    // Show preview
-    if (jobDescriptionPreview && jobDescriptionPreview.length > 50) {
-        html += `<div class="section"><h3>📄 Job Description Preview</h3>`;
-        html += `<p style="font-size: 0.85rem; color: #666; max-height: 120px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 8px;">${jobDescriptionPreview.substring(0, 600)}${jobDescriptionPreview.length > 600 ? '...' : ''}</p>`;
+    // Show the analyzed text
+    if (jobDescription && jobDescription.length > 0) {
+        html += `<div class="section"><h3>📄 Analyzed Job Description</h3>`;
+        html += `<p style="font-size: 0.85rem; color: #666; max-height: 150px; overflow-y: auto; background: #f8f9fa; padding: 12px; border-radius: 8px; white-space: pre-wrap;">${escapeHtml(jobDescription.substring(0, 800))}${jobDescription.length > 800 ? '...' : ''}</p>`;
         html += `</div>`;
     }
     
@@ -362,15 +249,11 @@ function displayResults(trustScore, scamAnalysis, redditData, companyName, jobDe
     resultsDiv.classList.remove('hidden');
 }
 
-// Display error message
-function displayError(message) {
-    resultsDiv.innerHTML = `
-        <div class="section" style="background: #f8d7da; color: #721c24;">
-            <h3>❌ Error</h3>
-            <p>${message}</p>
-        </div>
-    `;
-    resultsDiv.classList.remove('hidden');
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Main analysis function
@@ -390,15 +273,25 @@ async function analyzeJob() {
     loadingDiv.classList.remove('hidden');
     resultsDiv.classList.add('hidden');
     
+    // Show manual input option since automatic fetch is blocked
+    const userDescription = prompt(
+        '🔍 LinkedIn is blocking automatic fetching.\n\nPlease copy and paste the job description from LinkedIn into the box below.\n\n' +
+        'To copy:\n' +
+        '1. Go to the LinkedIn job page\n' +
+        '2. Scroll to the job description section\n' +
+        '3. Select all text (Ctrl+A / Cmd+A)\n' +
+        '4. Copy (Ctrl+C / Cmd+C)\n' +
+        '5. Paste below'
+    );
+    
+    if (!userDescription || userDescription.trim().length < 50) {
+        loadingDiv.classList.add('hidden');
+        alert('Please paste a valid job description (at least 50 characters) to analyze.');
+        return;
+    }
+    
     try {
-        const jobDescription = await fetchJobDescription(url);
-        
-        if (!jobDescription || jobDescription.length < 50) {
-            displayError('Could not fetch the job description. The LinkedIn page might be restricted. Try again later or manually paste the job description.');
-            loadingDiv.classList.add('hidden');
-            return;
-        }
-        
+        const jobDescription = userDescription;
         const companyName = extractCompanyName(jobDescription);
         const scamAnalysis = analyzeScamPatterns(jobDescription, companyName);
         
@@ -420,6 +313,16 @@ async function analyzeJob() {
     } finally {
         loadingDiv.classList.add('hidden');
     }
+}
+
+function displayError(message) {
+    resultsDiv.innerHTML = `
+        <div class="section" style="background: #f8d7da; color: #721c24;">
+            <h3>❌ Error</h3>
+            <p>${message}</p>
+        </div>
+    `;
+    resultsDiv.classList.remove('hidden');
 }
 
 // Event listeners
