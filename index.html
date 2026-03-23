@@ -10,7 +10,7 @@
     <div class="container">
         <header>
             <h1>🔍 Job Legitimacy Checker</h1>
-            <p>Analyze any job posting to detect scams and check company reputation</p>
+            <p>Paste any job description to detect scams and check company reputation</p>
         </header>
 
         <!-- Instructions -->
@@ -20,22 +20,22 @@
                 <div class="step">
                     <span class="step-number">1</span>
                     <div class="step-content">
-                        <strong>Paste LinkedIn Job URL</strong>
-                        <p>Copy the URL from LinkedIn job page</p>
+                        <strong>Copy Job Description</strong>
+                        <p>From LinkedIn, Indeed, or any job site, select and copy the full job description (Ctrl+C)</p>
                     </div>
                 </div>
                 <div class="step">
                     <span class="step-number">2</span>
                     <div class="step-content">
-                        <strong>Paste Job Description</strong>
-                        <p>Copy the full job description from LinkedIn and paste</p>
+                        <strong>Paste Below</strong>
+                        <p>Paste the entire job description into the text box below (Ctrl+V)</p>
                     </div>
                 </div>
                 <div class="step">
                     <span class="step-number">3</span>
                     <div class="step-content">
                         <strong>Enter Company Name</strong>
-                        <p>Optional - for Reddit and Glassdoor reviews</p>
+                        <p>Optional - helps find Reddit reviews. If left blank, we'll try to detect it</p>
                     </div>
                 </div>
                 <div class="step">
@@ -46,36 +46,28 @@
                     </div>
                 </div>
             </div>
-            <div class="tip">
-                💡 <strong>Tip:</strong> For best results, paste the FULL job description including responsibilities and requirements.
-            </div>
         </div>
 
         <!-- Input Form -->
         <div class="input-section">
             <div class="input-group">
-                <label>🔗 LinkedIn Job URL</label>
-                <input type="url" id="jobUrl" placeholder="https://www.linkedin.com/jobs/view/1234567890/" spellcheck="false">
-            </div>
-            
-            <div class="input-group">
                 <label>📝 Job Description <span>(required)</span></label>
-                <textarea id="jobDescription" rows="6" placeholder="Paste the full job description here..."></textarea>
-                <p class="hint">Copy from LinkedIn: Select all text in job description → Copy → Paste here</p>
+                <textarea id="jobDescription" rows="10" placeholder="Paste the full job description here...&#10;&#10;Example from your job:&#10;Job Title: Data Annotator&#10;Company: Innodata Inc.&#10;Employment Type: Freelance / Project-Based&#10;Location: Remote&#10;&#10;We are seeking Data Annotator to support a data annotation and linguistic quality project aimed at training Large Language Models (LLMs)..."></textarea>
+                <p class="hint">💡 Select all text from the job posting → Copy (Ctrl+C) → Paste here (Ctrl+V)</p>
             </div>
             
             <div class="input-group">
-                <label>🏢 Company Name <span>(optional - for reviews)</span></label>
+                <label>🏢 Company Name <span>(optional - for Reddit reviews)</span></label>
                 <input type="text" id="companyName" placeholder="e.g., Innodata, Google, Microsoft">
-                <p class="hint">Enter company name to fetch Reddit discussions and reviews</p>
+                <p class="hint">Helps fetch Reddit discussions about this company</p>
             </div>
             
-            <button id="analyzeBtn">Analyze Job →</button>
+            <button id="analyzeBtn">🔍 Analyze Job</button>
         </div>
 
         <div id="loading" class="loading hidden">
             <div class="spinner"></div>
-            <p>Analyzing job posting...</p>
+            <p>Analyzing job description...</p>
             <p class="small-text">Checking scam patterns and fetching company reputation</p>
         </div>
 

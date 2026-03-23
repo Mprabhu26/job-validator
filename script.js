@@ -1,10 +1,9 @@
 // ============================================
 // JOB LEGITIMACY CHECKER
-// Complete Version with Manual Input
+// Pure Manual Input - No URL, No Proxies
 // ============================================
 
 // DOM Elements
-const jobUrlInput = document.getElementById('jobUrl');
 const jobDescTextarea = document.getElementById('jobDescription');
 const companyNameInput = document.getElementById('companyName');
 const analyzeBtn = document.getElementById('analyzeBtn');
@@ -14,7 +13,7 @@ const resultsDiv = document.getElementById('results');
 // Scam patterns to detect
 const SCAM_PATTERNS = {
     aiInterview: {
-        keywords: ['AI interview', 'record yourself', 'train our AI', 'test our model', 'AI training', 'record your response', 'LLM', 'Large Language Model', 'data annotation', 'annotator', 'train our model', 'training data', 'language model training'],
+        keywords: ['AI interview', 'record yourself', 'train our AI', 'test our model', 'AI training', 'record your response', 'LLM', 'Large Language Model', 'data annotation', 'annotator', 'train our model', 'training data', 'language model training', 'train ai', 'ai model'],
         weight: 25,
         message: '⚠️ AI Training Scam - May be using you to train their AI model for free or low pay'
     },
@@ -132,7 +131,7 @@ async function fetchRedditData(companyName) {
     }
 }
 
-// Extract company name from job description if not provided
+// Extract company name from job description
 function extractCompanyFromDescription(jobDescription) {
     if (!jobDescription) return null;
     
@@ -212,8 +211,6 @@ function displayResults(trustScore, scamAnalysis, redditData, companyName, jobDe
     
     if (companyName) {
         html += `<div class="section"><h3>🏢 Company: ${escapeHtml(companyName)}</h3>`;
-        
-        // Add Glassdoor link
         const glassdoorSearchUrl = `https://www.glassdoor.com/Reviews/${encodeURIComponent(companyName.replace(/ /g, '-'))}-Reviews-E.htm`;
         html += `<a href="${glassdoorSearchUrl}" target="_blank" rel="noopener noreferrer" class="glassdoor-link">📊 View on Glassdoor →</a>`;
         html += `</div>`;
@@ -305,10 +302,8 @@ async function analyzeJob() {
     resultsDiv.classList.add('hidden');
     
     try {
-        // Analyze scam patterns
         const scamAnalysis = analyzeScamPatterns(jobDescription, companyName);
         
-        // Fetch Reddit data if company name exists
         let redditData = null;
         if (companyName && companyName.length >= 3) {
             try {
@@ -318,10 +313,7 @@ async function analyzeJob() {
             }
         }
         
-        // Calculate trust score
         const trustScore = calculateTrustScore(scamAnalysis, redditData);
-        
-        // Display results
         displayResults(trustScore, scamAnalysis, redditData, companyName, jobDescription);
         
     } catch (error) {
