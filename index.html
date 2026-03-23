@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Legitimacy Checker | Protect Yourself from Scams</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 Job Legitimacy Checker</h1>
+            <p>Paste any LinkedIn job URL to analyze if it's legitimate or a potential scam</p>
+        </header>
+
+        <div class="input-section">
+            <input type="url" id="jobUrl" placeholder="https://www.linkedin.com/jobs/view/..." spellcheck="false">
+            <button id="analyzeBtn">Analyze Job →</button>
+        </div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Analyzing job posting...</p>
+        </div>
+
+        <div id="results" class="results hidden"></div>
+
+        <footer>
+            <p>⚠️ This tool uses public data and pattern recognition. Always do your own research before applying.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
