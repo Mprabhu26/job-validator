@@ -1,84 +1,783 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Legitimacy Checker | Protect Yourself from Scams</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobTruth — Is This Job Real?</title>
+<meta name="description" content="Free AI-powered job legitimacy checker. Detect scams, ghost jobs, and shady companies instantly.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #09090f;
+  --surf:     #111118;
+  --surf2:    #18181f;
+  --border:   #252530;
+  --accent:   #7dd3fc;   /* sky blue */
+  --green:    #6ee7b7;
+  --warn:     #fbbf24;
+  --danger:   #f87171;
+  --text:     #e2e8f0;
+  --muted:    #5a5a72;
+  --radius:   14px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+
+body{
+  font-family:'Instrument Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── Background ── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(125,211,252,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(125,211,252,.025) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';position:fixed;top:-20%;left:50%;transform:translateX(-50%);
+  width:900px;height:500px;
+  background:radial-gradient(ellipse,rgba(125,211,252,.05) 0%,transparent 68%);
+  pointer-events:none;z-index:0;
+}
+
+.wrap{max-width:880px;margin:0 auto;padding:0 20px;position:relative;z-index:1;}
+
+/* ── Header ── */
+header{padding:52px 0 36px;text-align:center;}
+
+.eyebrow{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(125,211,252,.07);border:1px solid rgba(125,211,252,.2);
+  border-radius:100px;padding:5px 15px;
+  font-family:'DM Mono',monospace;font-size:11px;
+  color:var(--accent);letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:22px;
+}
+.eyebrow-dot{width:6px;height:6px;border-radius:50%;background:var(--green);
+  animation:blink 2s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+h1{
+  font-family:'Syne',sans-serif;font-size:clamp(38px,6vw,68px);
+  font-weight:800;letter-spacing:-.03em;line-height:1.04;margin-bottom:16px;
+}
+h1 em{font-style:normal;color:var(--accent);}
+
+.tagline{color:var(--muted);font-size:16px;max-width:460px;margin:0 auto 14px;line-height:1.65;}
+
+.pills{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.pill{
+  font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.05em;
+  color:var(--muted);padding:4px 11px;border:1px solid var(--border);border-radius:4px;
+}
+
+/* ── Form card ── */
+.card{
+  background:var(--surf);border:1px solid var(--border);
+  border-radius:var(--radius);padding:30px;margin-bottom:20px;
+}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+@media(max-width:580px){.form-grid{grid-template-columns:1fr;}}
+.full{grid-column:1/-1;}
+
+.field{display:flex;flex-direction:column;gap:5px;}
+label{
+  font-family:'DM Mono',monospace;font-size:11px;
+  text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+}
+label span{color:var(--accent);}
+
+input,textarea,select{
+  background:var(--surf2);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);
+  font-family:'Instrument Sans',sans-serif;font-size:14px;
+  padding:11px 13px;outline:none;width:100%;resize:none;
+  transition:border-color .18s,box-shadow .18s;
+}
+input:focus,textarea:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px rgba(125,211,252,.1);
+}
+input::placeholder,textarea::placeholder{color:var(--muted);}
+
+/* ── Submit ── */
+.btn{
+  width:100%;padding:15px;margin-top:18px;
+  background:var(--accent);color:#09090f;
+  border:none;border-radius:10px;
+  font-family:'Syne',sans-serif;font-size:16px;font-weight:700;
+  letter-spacing:.01em;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:transform .15s,box-shadow .15s,opacity .15s;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 10px 36px rgba(125,211,252,.22);}
+.btn:active{transform:translateY(0);}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* ── Error ── */
+.error{
+  background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.22);
+  border-radius:8px;padding:11px 14px;font-size:13px;color:var(--danger);
+  margin-top:12px;display:none;
+}
+.error.show{display:block;}
+
+/* ── Optional paste ── */
+.opt-card{
+  background:var(--surf);border:1px dashed var(--border);
+  border-radius:var(--radius);padding:20px;margin-bottom:20px;
+}
+.opt-label{
+  font-family:'DM Mono',monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--muted);margin-bottom:8px;
+}
+.gd-note{
+  background:rgba(125,211,252,.04);border:1px solid rgba(125,211,252,.12);
+  border-radius:8px;padding:11px 13px;font-size:12px;color:#7dd3fc99;
+  line-height:1.55;margin-top:8px;
+}
+
+/* ── Loading ── */
+.loading{
+  display:none;text-align:center;
+  background:var(--surf);border:1px solid var(--border);
+  border-radius:var(--radius);padding:48px 32px;margin-bottom:20px;
+}
+.loading.show{display:block;}
+
+.spinner{
+  width:38px;height:38px;
+  border:2px solid var(--border);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .75s linear infinite;
+  margin:0 auto 14px;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.load-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:600;margin-bottom:4px;}
+.load-sub{font-size:13px;color:var(--muted);margin-bottom:20px;}
+
+.steps{display:flex;flex-direction:column;gap:7px;max-width:300px;margin:0 auto;}
+.step{
+  display:flex;align-items:center;gap:9px;
+  font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);
+  padding:6px 12px;border-radius:6px;transition:all .3s;
+}
+.step.active{color:var(--accent);background:rgba(125,211,252,.06);}
+.step.done{color:var(--border);}
+.step-ic{width:14px;text-align:center;}
+
+/* ── Results ── */
+.results{display:none;}
+.results.show{display:block;}
+
+/* Trust hero */
+.trust-hero{
+  background:var(--surf);border:1px solid var(--border);
+  border-radius:var(--radius);padding:30px;
+  display:flex;align-items:center;gap:30px;
+  margin-bottom:14px;flex-wrap:wrap;
+}
+
+.ring-wrap{position:relative;width:118px;height:118px;flex-shrink:0;}
+.ring-wrap svg{transform:rotate(-90deg);width:118px;height:118px;}
+.ring-track{fill:none;stroke:var(--surf2);stroke-width:8;}
+.ring-fill{fill:none;stroke-width:8;stroke-linecap:round;
+  stroke-dasharray:326.7;stroke-dashoffset:326.7;
+  transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1),stroke .4s;}
+.ring-label{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.ring-num{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;line-height:1;}
+.ring-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+
+.trust-body{flex:1;min-width:200px;}
+.src-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);
+  padding:3px 9px;border:1px solid var(--border);border-radius:4px;margin-bottom:12px;
+}
+.src-dot{width:5px;height:5px;border-radius:50%;}
+.dot-gemini{background:#4285f4;}
+.dot-groq{background:#f26522;}
+.dot-offline{background:var(--muted);}
+
+.verdict{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px;}
+.verdict-sub{font-size:14px;color:var(--muted);line-height:1.55;margin-bottom:14px;}
+
+.tags{display:flex;flex-wrap:wrap;gap:7px;}
+.tag{
+  font-family:'DM Mono',monospace;font-size:11px;
+  padding:5px 12px;border-radius:100px;border:1px solid;
+}
+.tag-g{border-color:rgba(110,231,183,.35);color:var(--green);background:rgba(110,231,183,.06);}
+.tag-y{border-color:rgba(251,191,36,.35);color:var(--warn);background:rgba(251,191,36,.06);}
+.tag-r{border-color:rgba(248,113,113,.35);color:var(--danger);background:rgba(248,113,113,.06);}
+
+/* 2-col grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+@media(max-width:580px){.grid2{grid-template-columns:1fr;}}
+
+.acard{background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.acard-head{display:flex;align-items:center;gap:9px;margin-bottom:14px;}
+.acard-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.ic-r{background:rgba(248,113,113,.1);}
+.ic-y{background:rgba(251,191,36,.1);}
+.ic-g{background:rgba(110,231,183,.1);}
+.ic-b{background:rgba(125,211,252,.1);}
+.acard-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:600;}
+
+.sigs{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.sig{display:flex;gap:8px;font-size:13px;line-height:1.45;align-items:flex-start;}
+.sdot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.sdot-r{background:var(--danger);}
+.sdot-y{background:var(--warn);}
+.sdot-g{background:var(--green);}
+.sdot-n{background:var(--muted);}
+
+.mini-num{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;margin-bottom:4px;}
+.bar-wrap{height:4px;background:var(--surf2);border-radius:2px;overflow:hidden;margin-bottom:8px;}
+.bar-fill{height:100%;border-radius:2px;transition:width .9s ease;}
+.bar-g{background:var(--green);}
+.bar-y{background:var(--warn);}
+.bar-r{background:var(--danger);}
+.mini-lbl{font-size:12px;color:var(--muted);}
+
+/* Community section */
+.community{background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:14px;}
+.sec-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+
+.tabs{display:flex;gap:4px;background:var(--surf2);border-radius:8px;padding:4px;width:fit-content;margin-bottom:14px;}
+.tab{
+  padding:6px 16px;border-radius:6px;
+  font-family:'DM Mono',monospace;font-size:12px;
+  cursor:pointer;transition:all .2s;color:var(--muted);
+  border:none;background:none;
+}
+.tab.on{background:var(--surf);color:var(--text);border:1px solid var(--border);}
+
+.tab-body{display:none;}
+.tab-body.on{display:block;}
+
+.posts{display:flex;flex-direction:column;gap:9px;}
+.post{background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
+.post-meta{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.post-src{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.badge{font-size:10px;padding:2px 8px;border-radius:100px;font-family:'DM Mono',monospace;}
+.badge-g{background:rgba(110,231,183,.1);color:var(--green);}
+.badge-r{background:rgba(248,113,113,.1);color:var(--danger);}
+.badge-n{background:rgba(90,90,114,.1);color:var(--muted);}
+.post-title{font-size:13px;line-height:1.4;margin-bottom:3px;}
+.post-snip{font-size:12px;color:var(--muted);line-height:1.4;}
+.post-link{font-size:11px;color:var(--accent);text-decoration:none;font-family:'DM Mono',monospace;display:inline-block;margin-top:4px;}
+
+/* Reset btn */
+.reset-btn{
+  background:none;border:1px solid var(--border);color:var(--muted);
+  padding:9px 22px;border-radius:8px;cursor:pointer;
+  font-family:'DM Mono',monospace;font-size:12px;
+  transition:border-color .2s,color .2s;
+}
+.reset-btn:hover{border-color:var(--accent);color:var(--text);}
+
+footer{text-align:center;padding:28px 0 40px;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;}
+footer a{color:var(--accent);text-decoration:none;}
+</style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🔍 Job Legitimacy Checker</h1>
-            <p>Paste any job description to detect scams and check company reputation</p>
-        </header>
 
-        <!-- Instructions -->
-        <div class="instructions">
-            <h3>📖 How to Use</h3>
-            <div class="steps">
-                <div class="step">
-                    <span class="step-number">1</span>
-                    <div class="step-content">
-                        <strong>Copy Job Description</strong>
-                        <p>From LinkedIn, Indeed, or any job site, select and copy the full job description (Ctrl+C)</p>
-                    </div>
-                </div>
-                <div class="step">
-                    <span class="step-number">2</span>
-                    <div class="step-content">
-                        <strong>Paste Below</strong>
-                        <p>Paste the entire job description into the text box below (Ctrl+V)</p>
-                    </div>
-                </div>
-                <div class="step">
-                    <span class="step-number">3</span>
-                    <div class="step-content">
-                        <strong>Enter Company Name</strong>
-                        <p>Optional - helps find Reddit reviews. If left blank, we'll try to detect it</p>
-                    </div>
-                </div>
-                <div class="step">
-                    <span class="step-number">4</span>
-                    <div class="step-content">
-                        <strong>Click Analyze</strong>
-                        <p>Get instant scam detection and trust score</p>
-                    </div>
-                </div>
-            </div>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header>
+    <div class="eyebrow"><span class="eyebrow-dot"></span>Free · No account · AI-powered</div>
+    <h1>Is this job <em>real?</em></h1>
+    <p class="tagline">Paste any listing. Get an instant trust score, scam signals, ghost-job rating, and live Reddit data.</p>
+    <div class="pills">
+      <span class="pill">Gemini AI</span>
+      <span class="pill">Groq fallback</span>
+      <span class="pill">Reddit data</span>
+      <span class="pill">No signup needed</span>
+    </div>
+  </header>
+
+  <!-- FORM -->
+  <div class="card">
+    <div class="form-grid">
+      <div class="field">
+        <label>Company Name <span>*</span></label>
+        <input id="co" type="text" placeholder="e.g. Acme Corp" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Job Title <span>*</span></label>
+        <input id="jt" type="text" placeholder="e.g. Senior Software Engineer">
+      </div>
+      <div class="field full">
+        <label>Job Description <span>*</span></label>
+        <textarea id="jd" rows="9" placeholder="Paste the full job description here…"></textarea>
+      </div>
+      <div class="field">
+        <label>Salary Range</label>
+        <input id="sal" type="text" placeholder="e.g. $80k–$120k or not listed">
+      </div>
+      <div class="field">
+        <label>Location / Work Type</label>
+        <input id="loc" type="text" placeholder="e.g. Remote, New York NY">
+      </div>
+    </div>
+    <div id="err" class="error"></div>
+    <button class="btn" id="analyzeBtn" onclick="run()">
+      <span>🔍</span> Analyze This Job
+    </button>
+  </div>
+
+  <!-- OPTIONAL PASTE -->
+  <div class="opt-card">
+    <div class="opt-label">📋 Optional — paste Glassdoor / community reviews</div>
+    <textarea id="extra" rows="4" placeholder="Copy-paste any reviews, Reddit posts, or Glassdoor text about this company. The AI will factor them in."></textarea>
+    <div class="gd-note">ℹ️ Glassdoor has no public API and blocks scrapers. Paste reviews manually above — they'll be analyzed alongside the job description.</div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div class="load-title">Investigating<span id="dots"></span></div>
+    <div class="load-sub">Cross-referencing AI + community data</div>
+    <div class="steps">
+      <div class="step" id="s-reddit"><span class="step-ic">⏳</span>Fetching Reddit posts</div>
+      <div class="step" id="s-ai"><span class="step-ic">⏳</span>Running AI analysis</div>
+      <div class="step" id="s-score"><span class="step-ic">⏳</span>Calculating trust score</div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results" id="results">
+
+    <!-- Trust hero -->
+    <div class="trust-hero">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 118 118">
+          <circle class="ring-track" cx="59" cy="59" r="51"/>
+          <circle class="ring-fill" id="arc" cx="59" cy="59" r="51"/>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-num" id="rNum">—</div>
+          <div class="ring-sub">/ 100</div>
         </div>
-
-        <!-- Input Form -->
-        <div class="input-section">
-            <div class="input-group">
-                <label>📝 Job Description <span>(required)</span></label>
-                <textarea id="jobDescription" rows="10" placeholder="Paste the full job description here...&#10;&#10;Example from your job:&#10;Job Title: Data Annotator&#10;Company: Innodata Inc.&#10;Employment Type: Freelance / Project-Based&#10;Location: Remote&#10;&#10;We are seeking Data Annotator to support a data annotation and linguistic quality project aimed at training Large Language Models (LLMs)..."></textarea>
-                <p class="hint">💡 Select all text from the job posting → Copy (Ctrl+C) → Paste here (Ctrl+V)</p>
-            </div>
-            
-            <div class="input-group">
-                <label>🏢 Company Name <span>(optional - for Reddit reviews)</span></label>
-                <input type="text" id="companyName" placeholder="e.g., Innodata, Google, Microsoft">
-                <p class="hint">Helps fetch Reddit discussions about this company</p>
-            </div>
-            
-            <button id="analyzeBtn">🔍 Analyze Job</button>
-        </div>
-
-        <div id="loading" class="loading hidden">
-            <div class="spinner"></div>
-            <p>Analyzing job description...</p>
-            <p class="small-text">Checking scam patterns and fetching company reputation</p>
-        </div>
-
-        <div id="results" class="results hidden"></div>
-
-        <footer>
-            <p>⚠️ This tool analyzes job descriptions for scam patterns using public data. Always do your own research before applying.</p>
-            <p class="small-text">🔒 All analysis happens in your browser. No data is stored on any server.</p>
-        </footer>
+      </div>
+      <div class="trust-body">
+        <div class="src-badge"><span class="src-dot" id="srcDot"></span><span id="srcLbl"></span></div>
+        <div class="verdict" id="verdict">—</div>
+        <div class="verdict-sub" id="verdictSub">—</div>
+        <div class="tags" id="tags"></div>
+      </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- 4-card grid -->
+    <div class="grid2">
+      <div class="acard">
+        <div class="acard-head"><div class="acard-icon ic-r">🚩</div><div class="acard-title">Scam Signals</div></div>
+        <ul class="sigs" id="scamSigs"></ul>
+      </div>
+      <div class="acard">
+        <div class="acard-head"><div class="acard-icon ic-y">👻</div><div class="acard-title">Ghost Job Score</div></div>
+        <div class="mini-num" id="ghostNum">—</div>
+        <div class="bar-wrap"><div class="bar-fill bar-y" id="ghostBar" style="width:0%"></div></div>
+        <div class="mini-lbl" id="ghostLbl"></div>
+        <ul class="sigs" id="ghostSigs" style="margin-top:10px"></ul>
+      </div>
+      <div class="acard">
+        <div class="acard-head"><div class="acard-icon ic-g">🏢</div><div class="acard-title">Company Rep</div></div>
+        <div class="mini-num" id="compNum">—</div>
+        <div class="bar-wrap"><div class="bar-fill bar-g" id="compBar" style="width:0%"></div></div>
+        <div class="mini-lbl" id="compLbl"></div>
+        <ul class="sigs" id="compSigs" style="margin-top:10px"></ul>
+      </div>
+      <div class="acard">
+        <div class="acard-head"><div class="acard-icon ic-b">📋</div><div class="acard-title">Job Quality</div></div>
+        <ul class="sigs" id="jobSigs"></ul>
+      </div>
+    </div>
+
+    <!-- Community -->
+    <div class="community">
+      <div class="sec-title">🌐 Community Data</div>
+      <div class="tabs">
+        <button class="tab on" onclick="switchTab('reddit',this)">Reddit</button>
+        <button class="tab" onclick="switchTab('glassdoor',this)">Glassdoor (pasted)</button>
+      </div>
+      <div class="tab-body on" id="tab-reddit">
+        <div class="posts" id="redditPosts"><div style="font-size:13px;color:var(--muted)">Loading…</div></div>
+      </div>
+      <div class="tab-body" id="tab-glassdoor">
+        <div id="gdContent" style="font-size:13px;color:var(--muted);line-height:1.65">
+          No Glassdoor text pasted. Copy reviews from glassdoor.com and paste them in the box above, then re-analyze.
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommended actions -->
+    <div class="acard" style="margin-bottom:14px">
+      <div class="acard-head"><div class="acard-icon ic-g">✅</div><div class="acard-title">Recommended Actions</div></div>
+      <ul class="sigs" id="actions"></ul>
+    </div>
+
+    <div style="text-align:center;margin-bottom:24px">
+      <button class="reset-btn" onclick="reset()">← Analyze Another Job</button>
+    </div>
+  </div>
+
+  <footer>JobTruth · Free forever · <a href="https://github.com" target="_blank">Open source</a> · AI may be imperfect — use your judgment</footer>
+</div>
+
+<script>
+// ─── Dots animation ────────────────────────────────────────────────────────────
+let dotsInt = null;
+const startDots = () => {
+  let n = 0;
+  dotsInt = setInterval(() => {
+    document.getElementById('dots').textContent = '.'.repeat((n++ % 3) + 1);
+  }, 400);
+};
+const stopDots = () => clearInterval(dotsInt);
+
+// ─── Step helper ───────────────────────────────────────────────────────────────
+function setStep(id, state) {
+  const el = document.getElementById('s-' + id);
+  el.classList.remove('active', 'done');
+  if (state === 'active') { el.classList.add('active'); el.querySelector('.step-ic').textContent = '⚡'; }
+  if (state === 'done')   { el.classList.add('done');   el.querySelector('.step-ic').textContent = '✓'; }
+}
+
+// ─── Reddit (public JSON API, no auth) ────────────────────────────────────────
+async function fetchReddit(company) {
+  const queries = [
+    `${company} company review`,
+    `${company} scam fraud`,
+    `${company} job experience`
+  ];
+  const seen = new Set(), results = [];
+  for (const q of queries) {
+    try {
+      const r = await fetch(
+        `https://www.reddit.com/search.json?q=${encodeURIComponent(q)}&sort=relevance&t=year&limit=5&type=link`,
+        { headers: { Accept: 'application/json' } }
+      );
+      if (!r.ok) continue;
+      const d = await r.json();
+      for (const p of d?.data?.children || []) {
+        const pd = p.data;
+        if (!pd.title || seen.has(pd.permalink)) continue;
+        seen.add(pd.permalink);
+        results.push({
+          title: pd.title,
+          snippet: (pd.selftext || '').slice(0, 220),
+          url: `https://reddit.com${pd.permalink}`,
+          sub: pd.subreddit,
+          date: new Date(pd.created_utc * 1000).toLocaleDateString()
+        });
+      }
+    } catch {}
+  }
+  return results.slice(0, 8);
+}
+
+// ─── Sentiment heuristic ──────────────────────────────────────────────────────
+function sentiment(t) {
+  const s = (t || '').toLowerCase();
+  const pos = ['great','good','legit','genuine','recommend','love','excellent','real','positive'];
+  const neg = ['scam','fraud','fake','avoid','terrible','ghost','beware','suspicious','warning','never hire'];
+  let p = 0, n = 0;
+  pos.forEach(w => s.includes(w) && p++);
+  neg.forEach(w => s.includes(w) && n++);
+  return n > p ? 'neg' : p > n ? 'pos' : 'neu';
+}
+
+// ─── AI prompt ────────────────────────────────────────────────────────────────
+function buildPrompt(co, jt, jd, sal, loc, extra, redditSummary) {
+  return `You are a job legitimacy analyst. Analyze the following job posting and return ONLY raw JSON (no markdown fences).
+
+Company: ${co}
+Job Title: ${jt}
+Salary: ${sal || 'Not stated'}
+Location: ${loc || 'Not stated'}
+Description:
+${jd}
+${redditSummary ? `\nReddit community data:\n${redditSummary}` : ''}
+${extra ? `\nUser-pasted reviews (Glassdoor/other):\n${extra}` : ''}
+
+Return this exact JSON structure:
+{
+  "trustScore": <0-100>,
+  "verdict": "<Likely Legitimate|Proceed with Caution|Suspicious|Likely Scam>",
+  "verdictSummary": "<2-3 sentence plain-English summary>",
+  "ghostScore": <0-100, 100=definitely ghost job>,
+  "ghostLabel": "<short label>",
+  "companyRepScore": <0-100>,
+  "companyRepLabel": "<short label>",
+  "scamSignals": [{"text":"<finding>","severity":"<high|medium|low|none>"}],
+  "ghostSignals": [{"text":"<finding>","type":"<positive|negative|neutral>"}],
+  "companySignals": [{"text":"<finding>","type":"<positive|negative|neutral>"}],
+  "jobQualitySignals": [{"text":"<finding>","type":"<positive|negative|neutral>"}],
+  "recommendedActions": [{"text":"<action>","priority":"<high|medium|low>"}]
+}`;
+}
+
+// ─── Offline heuristics (no AI) ───────────────────────────────────────────────
+function offlineAnalysis(co, jt, jd, sal, loc) {
+  const d = (jd + jt + co).toLowerCase();
+  const checks = [
+    { text:'Very short / vague description', flag: jd.length < 200 },
+    { text:'Uses "our client" / "confidential company"', flag: d.includes('our client') || d.includes('confidential company') },
+    { text:'Requests personal info (SSN, bank details)', flag: /ssn|social security|bank account/.test(d) },
+    { text:'Unrealistic earning promises', flag: /unlimited earning|make \$|earn \$1[0-9]{3}/.test(d) },
+    { text:'MLM / recruitment language', flag: /build your team|recruit|downline/.test(d) },
+    { text:'Upfront payment / fee required', flag: /pay for training|certification fee|purchase/.test(d) },
+    { text:'No responsibilities listed', flag: !/responsibl|duties|you will|you'll/.test(d) },
+    { text:'No salary range provided', flag: !sal },
+    { text:'No location specified', flag: !loc },
+  ];
+  const flags = checks.filter(c => c.flag);
+  const trust = Math.max(10, Math.min(90, 87 - flags.length * 11));
+  const verdict = flags.length >= 4 ? 'Likely Scam' : flags.length >= 2 ? 'Suspicious' : flags.length === 1 ? 'Proceed with Caution' : 'Likely Legitimate';
+  return {
+    _source:'offline', trustScore:trust, verdict,
+    verdictSummary:`Offline analysis found ${flags.length} concern(s). ${flags.length === 0 ? 'The listing looks standard.' : 'Review the signals below.'} This is rule-based only — AI keys are configured on the server.`,
+    ghostScore: jd.length < 300 ? 55 : 20,
+    ghostLabel: jd.length < 300 ? 'Short description — possible ghost job' : 'Description length seems adequate',
+    companyRepScore:50, companyRepLabel:'No data without AI',
+    scamSignals: flags.length ? flags.map(f=>({text:f.text,severity:'medium'})) : [{text:'No obvious scam signals',severity:'none'}],
+    ghostSignals:[{text:`Description: ${jd.length} chars (>500 is good)`,type:jd.length>500?'positive':'negative'}],
+    companySignals:[{text:'Configure AI keys on server for company analysis',type:'neutral'}],
+    jobQualitySignals:[
+      {text:sal?`Salary stated: ${sal}`:'No salary range listed',type:sal?'positive':'negative'},
+      {text:loc?`Location: ${loc}`:'Location not specified',type:loc?'positive':'neutral'}
+    ],
+    recommendedActions:[
+      {text:'Search the company on LinkedIn to verify it exists',priority:'high'},
+      {text:'Never pay anything before your first day',priority:'high'},
+      {text:`Search "${co} scam" on Reddit and Google`,priority:'medium'},
+      {text:'Request a video call to verify the hiring manager',priority:'medium'}
+    ]
+  };
+}
+
+// ─── Call our own /api/analyze (keys are server-side) ─────────────────────────
+async function callAPI(prompt) {
+  const r = await fetch('/api/analyze', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ prompt })
+  });
+  if (!r.ok) throw new Error(`API ${r.status}`);
+  return r.json();   // { result: string|null, source: 'gemini'|'groq'|'offline' }
+}
+
+function parseJSON(text) {
+  return JSON.parse(text.replace(/```json\n?|```\n?/g,'').trim());
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+async function run() {
+  const co  = document.getElementById('co').value.trim();
+  const jt  = document.getElementById('jt').value.trim();
+  const jd  = document.getElementById('jd').value.trim();
+  const sal = document.getElementById('sal').value.trim();
+  const loc = document.getElementById('loc').value.trim();
+  const extra = document.getElementById('extra').value.trim();
+  const errEl = document.getElementById('err');
+
+  errEl.classList.remove('show');
+  if (!co || !jt || !jd) {
+    errEl.textContent = 'Please fill in Company Name, Job Title, and Job Description.';
+    errEl.classList.add('show'); return;
+  }
+
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('results').classList.remove('show');
+  document.querySelector('.card').style.opacity = '.5';
+  startDots();
+  ['reddit','ai','score'].forEach(s => {
+    const el = document.getElementById('s-'+s);
+    el.classList.remove('active','done');
+    el.querySelector('.step-ic').textContent = '⏳';
+  });
+
+  // Step 1: Reddit
+  setStep('reddit','active');
+  let redditPosts = [];
+  try { redditPosts = await fetchReddit(co); } catch {}
+  const redditSummary = redditPosts.slice(0,5)
+    .map(p=>`Title: ${p.title}\n${p.snippet||''}`)
+    .join('\n---\n');
+  setStep('reddit','done');
+
+  // Step 2: AI
+  setStep('ai','active');
+  let data;
+  try {
+    const prompt = buildPrompt(co, jt, jd, sal, loc, extra, redditSummary);
+    const resp = await callAPI(prompt);
+    if (resp.result) {
+      data = parseJSON(resp.result);
+      data._source = resp.source;
+    } else {
+      data = offlineAnalysis(co, jt, jd, sal, loc);
+    }
+  } catch (e) {
+    console.warn('API call failed, using offline:', e);
+    data = offlineAnalysis(co, jt, jd, sal, loc);
+  }
+  setStep('ai','done');
+
+  // Step 3
+  setStep('score','active');
+  await new Promise(r=>setTimeout(r,350));
+  setStep('score','done');
+
+  stopDots();
+  render(data, redditPosts, extra, co);
+
+  document.getElementById('loading').classList.remove('show');
+  document.getElementById('results').classList.add('show');
+  document.getElementById('analyzeBtn').disabled = false;
+  document.querySelector('.card').style.opacity = '1';
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function render(d, redditPosts, extra, co) {
+  const score = Math.max(0, Math.min(100, d.trustScore || 50));
+  const col = score >= 70 ? 'var(--green)' : score >= 45 ? 'var(--warn)' : 'var(--danger)';
+
+  // Ring
+  const arc = document.getElementById('arc');
+  const C = 320.4;
+  arc.style.stroke = col;
+  setTimeout(()=>{ arc.style.strokeDashoffset = C - (score/100)*C; }, 80);
+  document.getElementById('rNum').textContent = score;
+  document.getElementById('rNum').style.color = col;
+
+  // Source badge
+  const src = d._source || 'offline';
+  document.getElementById('srcDot').className = 'src-dot dot-' + src;
+  document.getElementById('srcLbl').textContent =
+    src === 'gemini' ? 'Powered by Gemini AI' :
+    src === 'groq'   ? 'Powered by Groq AI'   : 'Offline heuristics';
+
+  // Verdict
+  document.getElementById('verdict').textContent = d.verdict || '—';
+  document.getElementById('verdictSub').textContent = d.verdictSummary || '';
+
+  // Tags
+  const tagEl = document.getElementById('tags');
+  const tagCls = score >= 70 ? 'tag-g' : score >= 45 ? 'tag-y' : 'tag-r';
+  tagEl.innerHTML = ['Verify Company','Check References','Research Online']
+    .map(t=>`<span class="tag ${tagCls}">${t}</span>`).join('');
+
+  // Scam signals
+  renderSigs('scamSigs', d.scamSignals || [], s => {
+    const cls = s.severity==='high'?'sdot-r':s.severity==='medium'?'sdot-y':s.severity==='none'?'sdot-g':'sdot-n';
+    return `<span class="sdot ${cls}"></span>${esc(s.text)}`;
+  });
+
+  // Ghost
+  const gs = d.ghostScore || 0;
+  document.getElementById('ghostNum').textContent = gs + '%';
+  document.getElementById('ghostLbl').textContent = d.ghostLabel || '';
+  const gb = document.getElementById('ghostBar');
+  gb.className = 'bar-fill ' + (gs>65?'bar-r':gs>35?'bar-y':'bar-g');
+  setTimeout(()=>{ gb.style.width = gs+'%'; }, 200);
+  renderSigs('ghostSigs', d.ghostSignals||[], s=>{
+    const cls=s.type==='positive'?'sdot-g':s.type==='negative'?'sdot-r':'sdot-n';
+    return `<span class="sdot ${cls}"></span>${esc(s.text)}`;
+  });
+
+  // Company rep
+  const cs = d.companyRepScore || 50;
+  document.getElementById('compNum').textContent = cs + '%';
+  document.getElementById('compLbl').textContent = d.companyRepLabel || '';
+  const cb = document.getElementById('compBar');
+  cb.className = 'bar-fill '+(cs>=65?'bar-g':cs>=40?'bar-y':'bar-r');
+  setTimeout(()=>{ cb.style.width = cs+'%'; }, 250);
+  renderSigs('compSigs', d.companySignals||[], s=>{
+    const cls=s.type==='positive'?'sdot-g':s.type==='negative'?'sdot-r':'sdot-n';
+    return `<span class="sdot ${cls}"></span>${esc(s.text)}`;
+  });
+
+  // Job quality
+  renderSigs('jobSigs', d.jobQualitySignals||[], s=>{
+    const cls=s.type==='positive'?'sdot-g':s.type==='negative'?'sdot-r':'sdot-n';
+    return `<span class="sdot ${cls}"></span>${esc(s.text)}`;
+  });
+
+  // Actions
+  renderSigs('actions', d.recommendedActions||[], a=>{
+    const cls=a.priority==='high'?'sdot-r':a.priority==='medium'?'sdot-y':'sdot-g';
+    return `<span class="sdot ${cls}"></span>${esc(a.text)}`;
+  });
+
+  // Reddit posts
+  const rEl = document.getElementById('redditPosts');
+  if (!redditPosts.length) {
+    rEl.innerHTML = `<div style="font-size:13px;color:var(--muted)">No Reddit posts found for "${esc(co)}". Try searching manually at reddit.com.</div>`;
+  } else {
+    rEl.innerHTML = redditPosts.map(p=>{
+      const sent = sentiment(p.title+' '+p.snippet);
+      const bCls = sent==='pos'?'badge-g':sent==='neg'?'badge-r':'badge-n';
+      const bLbl = sent==='pos'?'↑ Positive':sent==='neg'?'↓ Negative':'→ Neutral';
+      return `<div class="post">
+        <div class="post-meta">
+          <span class="post-src">r/${esc(p.sub)} · ${p.date}</span>
+          <span class="badge ${bCls}">${bLbl}</span>
+        </div>
+        <div class="post-title">${esc(p.title)}</div>
+        ${p.snippet?`<div class="post-snip">${esc(p.snippet.slice(0,180))}${p.snippet.length>180?'…':''}</div>`:''}
+        <a class="post-link" href="${p.url}" target="_blank" rel="noopener">View on Reddit ↗</a>
+      </div>`;
+    }).join('');
+  }
+
+  // Glassdoor pasted
+  const gdEl = document.getElementById('gdContent');
+  gdEl.innerHTML = extra
+    ? `<div style="font-size:12px;color:var(--green);font-family:'DM Mono',monospace;margin-bottom:8px">✓ Analyzed by AI above</div>
+       <div style="background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px;color:var(--muted);max-height:180px;overflow-y:auto;white-space:pre-wrap">${esc(extra)}</div>`
+    : `No Glassdoor text pasted. Copy reviews from glassdoor.com and paste them in the box above, then re-analyze.`;
+}
+
+function renderSigs(id, arr, fn) {
+  const el = document.getElementById(id);
+  if (!arr.length) { el.innerHTML = '<li class="sig"><span class="sdot sdot-n"></span>No data</li>'; return; }
+  el.innerHTML = arr.map(s=>`<li class="sig">${fn(s)}</li>`).join('');
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.tab-body').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('tab-'+name).classList.add('on');
+}
+
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function reset() {
+  document.getElementById('results').classList.remove('show');
+  document.querySelector('.card').style.opacity='1';
+  document.getElementById('analyzeBtn').disabled=false;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
 </body>
 </html>
